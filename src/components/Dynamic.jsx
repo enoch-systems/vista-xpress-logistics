@@ -9,45 +9,65 @@ import rightIcon from '../assets/right.svg'
 import soldBadge from '../assets/soldout.png'
 import MountReveal from '../components/MountReveal'
 
-// Product metadata (colors and descriptions)
-const PRODUCT_META = {
-  1: { colors: ['Natural Black', 'Brown', 'Blonde'], description: 'Luxury human hair wig with premium quality strands. Features a natural hairline, soft texture, and versatile styling options. Perfect for everyday wear or special occasions.' },
-  2: { colors: ['Black', 'Brown', 'Auburn'], description: 'Lace front synthetic wig with realistic appearance. Breathable cap construction and pre-styled for convenience. Easy to maintain and style.' },
-  3: { colors: ['Dark Brown', 'Light Brown', 'Golden'], description: 'Premium quality wig with superior craftsmanship. Features adjustable straps and a comfortable fit for all-day wear. Natural movement and shine.' },
-  4: { colors: ['Jet Black', 'Plum', 'Burgundy'], description: 'Natural look wig with seamless blend. Lightweight construction with realistic texture and appearance. Sold out due to high demand.' },
-  5: { colors: ['Custom Colors Available'], description: 'Custom color wig personalized to your preferences. Handcrafted with attention to detail and premium materials. Unique style tailored just for you.' },
-  6: { colors: ['Natural Black', 'Dark Brown', 'Light Brown'], description: 'Brazilian virgin hair wig with exceptional quality. Thick, full-bodied hair with natural luster and minimal shedding. Perfect for long-term wear.' },
-  7: { colors: ['Black', 'Dark Brown', 'Medium Brown'], description: 'Peruvian straight wig with silky smooth texture. Natural shine and easy to manage. Versatile styling options for any occasion.' },
-  8: { colors: ['Natural Black', 'Brown', 'Burgundy'], description: 'Malaysian body wave wig with beautiful waves. Soft to the touch with natural movement. Durable and long-lasting construction.' },
-  9: { colors: ['Jet Black', 'Dark Brown', 'Light Brown'], description: 'Indian Remy hair wig with cuticle alignment. Prevents tangling and maintains natural look. Premium quality at an affordable price.' },
-  10: { colors: ['Platinum Blonde', 'Golden Blonde', 'Light Brown'], description: 'European human hair wig with finest quality. Exceptionally soft and lightweight. Natural appearance with easy styling.' },
-  11: { colors: ['Black', 'Dark Brown', 'Natural Black'], description: 'African American wig designed for natural texture. Perfect blend and density. Comfortable fit for all-day wear.' },
-  12: { colors: ['Natural Black', 'Brown', 'Blonde Mix'], description: 'Curly lace front wig with defined curls. Realistic hairline and part. High-quality synthetic fibers for lasting style.' },
-  13: { colors: ['Light Brown', 'Dark Brown', 'Golden'], description: 'Wavy human hair wig with beach waves. Natural texture and movement. Easy to maintain and style versatility.' },
-  14: { colors: ['Jet Black', 'Brown', 'Platinum Blonde'], description: 'Straight bob wig with classic cut. Professional and stylish appearance. Perfect for business or casual settings.' },
-  15: { colors: ['Natural Black', 'Brown', 'Ombre'], description: 'Long layered wig with beautiful layers. Adds volume and movement. Versatile styling for any face shape.' },
-  16: { colors: ['Platinum Blonde', 'Black', 'Pink'], description: 'Short pixie cut wig with modern style. Bold and confident look. Easy to maintain with minimal styling required.' },
-  17: { colors: ['Natural Brown', 'Caramel', 'Black'], description: 'Medium length wig with versatile styling. Perfect balance between short and long. Natural appearance and comfortable fit.' },
-  18: { colors: ['Dark Brown to Blonde', 'Black to Silver', 'Brown to Red'], description: 'Ombre color wig with beautiful gradient. Trendy and fashionable appearance. Premium quality color treatment.' },
-  19: { colors: ['Natural Black with Highlights', 'Brown with Blonde', 'Blonde with Lowlights'], description: 'Highlight wig with dimensional color. Adds depth and dimension. Natural-looking highlights for brightness.' },
-  20: { colors: ['Brown to Blonde', 'Dark to Light', 'Natural Sunset'], description: 'Balayage wig with hand-painted color. Soft, natural-looking transitions. High-end salon quality at home.' },
-  21: { colors: ['Platinum Blonde', 'Honey Blonde', 'Strawberry Blonde'], description: 'Blonde human hair wig with various shades. Premium quality blonde hair. Versatile and sophisticated appearance.' },
-  22: { colors: ['Chocolate Brown', 'Espresso', 'Chestnut'], description: 'Brunette wig with rich brown tones. Warm and natural appearance. Complements various skin tones beautifully.' },
-  23: { colors: ['Fire Red', 'Burgundy', 'Copper'], description: 'Red hair wig with vibrant colors. Bold and eye-catching appearance. High-quality color that lasts.' },
-  24: { colors: ['Jet Black', 'Soft Black', 'Off Black'], description: 'Black color wig with various black shades. Classic and timeless beauty. Natural-looking black tones.' },
-  25: { colors: ['Silver Grey', 'Salt and Pepper', 'Charcoal'], description: 'Grey hair wig with sophisticated shades. Elegant and mature appearance. Modern take on grey hair styling.' },
-  26: { colors: ['Purple', 'Blue', 'Pink', 'Green'], description: 'Fashion color wig with bold choices. Express your unique style. Vibrant colors that make a statement.' },
-  27: { colors: ['Natural Black', 'Brown', 'Blonde'], description: 'Natural wave wig with subtle waves. Effortlessly beautiful appearance. Low maintenance with natural style.' },
-  28: { colors: ['Dark Brown', 'Black', 'Caramel'], description: 'Deep wave wig with defined waves. Romantic and elegant look. Perfect for special occasions.' },
-  29: { colors: ['Light Brown', 'Blonde', 'Golden'], description: 'Loose wave wig with soft waves. Casual and relaxed appearance. Beach-ready style anytime.' },
-  30: { colors: ['Natural Black', 'Brown', 'Blonde Mix'], description: 'Tight curl wig with bouncy curls. Full-bodied and voluminous. Fun and playful personality.' },
-  31: { colors: ['Black', 'Brown', 'Mixed Tones'], description: 'Kinky curly wig with tight coils. Natural texture and appearance. Embraces natural hair beauty.' },
-  32: { colors: ['Natural Black', 'Brown Tones'], description: 'Afro curl wig with full volume. Bold and confident style. Celebrates natural hair texture.' },
-  33: { colors: ['Black', 'Brown', 'Dark Brown'], description: 'Coily wig with springy coils. Defined and manageable curls. Moisture-rich for healthy appearance.' },
-  34: { colors: ['Natural Black', 'Brown', 'Blonde'], description: 'Silk base wig with premium construction. Most natural-looking hairline. Undetectable and comfortable.' },
-  35: { colors: ['Natural Black', 'Brown', 'Blonde'], description: 'Mono part wig with realistic parting. Versatile styling options. Professional appearance guaranteed.' },
-  36: { colors: ['All Colors Available'], description: 'Glueless wig for easy application. No adhesive needed. Comfortable and secure fit for all-day wear.' }
-}
+// Generate product description based on name with minimum 16 words
+const generateProductDescription = (productName) => {
+  const descriptions = {
+    'chuwudi hair': 'Premium quality human hair wig with natural texture and beautiful movement. Perfect for everyday wear with comfortable fit and long-lasting durability.',
+    'grey hair wig': 'Elegant grey colored wig with sophisticated styling and premium materials. Features realistic appearance and comfortable all-day wear.',
+    'premium quality wig': 'Luxury human hair wig with exceptional quality and natural appearance. Handcrafted with attention to detail for perfect styling.',
+    'bone straight': 'Sleek straight hair wig with smooth texture and natural shine. Versatile styling options for any occasion or professional setting.',
+    'wig of brazil': 'Authentic Brazilian human hair wig with rich texture and volume. Premium quality with natural luster and minimal shedding.',
+    'curly wig': 'Beautiful curly hair wig with defined curls and natural bounce. Perfect for voluminous styling and confident appearance.',
+    'glueless front wig': 'Convenient glueless wig with easy application and secure fit. No adhesive required for comfortable all-day wear.',
+    'brazilian virgin hair': 'Premium Brazilian virgin hair wig with exceptional quality. Thick, full-bodied hair with natural luster and durability.',
+    'peruvian straight wig': 'Silky smooth Peruvian straight hair wig with natural shine. Easy to manage with versatile styling options.',
+    'malaysian body wave': 'Stunning Malaysian body wave wig with beautiful waves. Soft to touch with natural movement and lasting construction.',
+    'indian remy hair': 'High-quality Indian Remy hair wig with cuticle alignment. Prevents tangling and maintains natural appearance.',
+    'european human hair': 'Exceptionally soft European human hair wig with finest quality. Natural appearance with easy styling versatility.',
+    'african american wig': 'Natural texture African American wig designed for perfect blend. Comfortable fit with authentic appearance.',
+    'lace front wig': 'Realistic lace front wig with seamless hairline. Defined curls with premium synthetic fibers.',
+    'wavy human hair': 'Natural wave human hair wig with beach waves. Easy to maintain with versatile styling options.',
+    'straight bob wig': 'Classic straight bob wig with professional styling. Perfect for business or casual elegant settings.',
+    'short pixie cut': 'Modern short pixie cut wig with bold styling. Confident look with minimal maintenance required.',
+    'long layered wig': 'Beautiful long layered wig with volume and movement. Versatile styling for any face shape.',
+    'loose wave wig': 'Casual loose wave wig with soft appearance. Beach-ready style with effortless beauty.',
+    'tight curl wig': 'Bouncy tight curl wig with full volume. Fun and playful personality with defined curls.',
+    'kinky curly wig': 'Natural kinky curly wig with authentic texture. Bold and confident style celebrating natural beauty.',
+    'afro curl wig': 'Full volume afro curl wig with bold appearance. Celebrates natural hair texture beautifully.',
+    'coily wig': 'Springy coily wig with defined coils. Moisture-rich for healthy natural appearance.',
+    'silk base wig': 'Premium silk base wig with undetectable hairline. Most natural-looking construction available.',
+    'mono part wig': 'Realistic mono part wig with versatile styling. Professional appearance with realistic parting.',
+    'hd lace closure': 'High-definition lace closure with seamless blend. Perfect for natural-looking installations.',
+    'lace front wig': 'Advanced lace front technology with realistic appearance. Breathable construction for comfortable wear.'
+  };
+
+  // Convert to lowercase for matching
+  const lowerName = productName.toLowerCase();
+  
+  // Check for exact matches first
+  if (descriptions[lowerName]) {
+    return descriptions[lowerName];
+  }
+  
+  // Check for partial matches
+  for (const [key, description] of Object.entries(descriptions)) {
+    if (lowerName.includes(key) || key.includes(lowerName)) {
+      return description;
+    }
+  }
+  
+  // Generate generic description if no match found
+  const hairTypes = ['human hair', 'synthetic fiber', 'premium quality', 'luxury material'];
+  const features = ['natural appearance', 'comfortable fit', 'versatile styling', 'long-lasting durability'];
+  const occasions = ['everyday wear', 'special occasions', 'professional settings', 'casual outings'];
+  
+  const hairType = hairTypes[Math.floor(Math.random() * hairTypes.length)];
+  const feature1 = features[Math.floor(Math.random() * features.length)];
+  const feature2 = features[Math.floor(Math.random() * features.length)];
+  const occasion = occasions[Math.floor(Math.random() * occasions.length)];
+  
+  return `Premium ${hairType} wig with ${feature1} and ${feature2}. Perfect for ${occasion} with exceptional quality and beautiful styling.`;
+};
 
 
 
@@ -66,9 +86,31 @@ function Dynamic({ product: propProduct }) {
       return propProduct
     }
     
+    // Check for admin-edited products in localStorage
+    const savedProducts = localStorage.getItem('wigProducts');
+    let editedProductsMap = new Map();
+    
+    if (savedProducts) {
+      try {
+        const editedProducts = JSON.parse(savedProducts);
+        editedProductsMap = new Map(editedProducts.map(p => [p.id, p]));
+        console.log('Loaded admin-edited products:', editedProductsMap.size);
+      } catch (error) {
+        console.error('Error parsing saved products:', error);
+      }
+    }
+    
     // Check if it's an accessory ID (starts with 'acc')
     if (typeof id === 'string' && id.startsWith('acc')) {
-      const found = accessoryProducts.find(p => p.id === id)
+      let found = accessoryProducts.find(p => p.id === id);
+      // Merge with admin-edited data if available
+      if (editedProductsMap.has(id)) {
+        found = { ...found, ...editedProductsMap.get(id) };
+      }
+      // Generate description if not present
+      if (found && !found.description) {
+        found.description = generateProductDescription(found.name || found.title);
+      }
       console.log('Accessory lookup result:', found?.title || 'Not found')
       return found || products[1]
     }
@@ -77,14 +119,31 @@ function Dynamic({ product: propProduct }) {
     const productId = id ? parseInt(id, 10) : null
     if (productId && productId > 1000) {
       const accessoryId = `acc${productId - 1000}`
-      const found = accessoryProducts.find(p => p.id === accessoryId)
+      let found = accessoryProducts.find(p => p.id === accessoryId);
+      // Merge with admin-edited data if available
+      if (editedProductsMap.has(accessoryId)) {
+        found = { ...found, ...editedProductsMap.get(accessoryId) };
+      }
+      // Generate description if not present
+      if (found && !found.description) {
+        found.description = generateProductDescription(found.name || found.title);
+      }
       console.log('Numeric accessory lookup - productId:', productId, 'accessoryId:', accessoryId, 'result:', found?.title || 'Not found')
       return found || products[1]
     }
     
     // Default to shop products
     if (productId) {
-      const found = products.find(p => p.id === productId)
+      let found = products.find(p => p.id === productId);
+      // Merge with admin-edited data if available
+      if (editedProductsMap.has(productId)) {
+        found = { ...found, ...editedProductsMap.get(productId) };
+        console.log('Merged with admin data:', editedProductsMap.get(productId));
+      }
+      // Generate description if not present
+      if (found && !found.description) {
+        found.description = generateProductDescription(found.name || found.title);
+      }
       console.log('Main product lookup - productId:', productId, 'result:', found?.title || 'Not found')
       return found || products[1]
     }
@@ -388,7 +447,7 @@ function Dynamic({ product: propProduct }) {
             {/* Right: Details */}
             <div className="max-w-xl -mt-4 md:mt-3 ml-4 md:ml-0 md:col-span-1 lg:col-span-1">
               <p className="text-gray-500 text-sm leading-7 mt-3 md:mt-6 font-[verdana] md:text-base font-thin">
-                {product.description || (product.id && typeof product.id === 'number' && PRODUCT_META[product.id]?.description) || 'Product description not available.'}
+                {product.description || 'Product description not available.'}
               </p>
 
               <div className="mt-8 flex items-center gap-4">
