@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
-import Footer from "../pages/Footer";
-import { useCart } from '../context/CartContext'
-
-import { products, accessoryProducts } from '../data/products'
-import soldBadge from '../assets/soldout.png'
-import { Link } from 'react-router-dom'
-import MountReveal from '../components/MountReveal'
+import React, { useState, useMemo, useEffect } from 'react';
+import { useCart } from '../context/CartContext';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Plus, Minus, Star, Heart, Share2, Facebook, Twitter, Instagram } from 'lucide-react';
+import Footer from '../pages/Footer';
+import { products as originalProducts, accessoryProducts } from '../data/products';
+import MountReveal from '../components/MountReveal';
+import soldBadge from '../assets/soldout.png';
 
 // cache preloaded image urls so we don't create duplicate Image objects
 const preloadedImages = new Set()
@@ -26,10 +26,118 @@ const StarRow = ({ rating = 5 }) => {
 const Shop = () => {
   console.log('Shop component loaded at:', new Date().toISOString())
   
-  const cart = useCart()
-  // temporary added state per product for visual feedback after clicking Add to cart
+  const cart = useCart();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [showAddedToCart, setShowAddedToCart] = useState(false);
+
+  // Updated products from admin changes - prioritize localStorage over original data
+  const [currentProducts, setCurrentProducts] = useState(() => {
+    const savedProducts = localStorage.getItem('wigProducts');
+    if (savedProducts) {
+      try {
+        const parsed = JSON.parse(savedProducts);
+        console.log('Loading products from localStorage:', parsed);
+        return parsed;
+      } catch (error) {
+        console.error('Error parsing saved products:', error);
+        return originalProducts; // Fallback to original products
+      }
+    }
+    // Always use original products as fallback
+    return originalProducts;
+  });
+
+  // Merge original products with localStorage edits - preserve original titles but allow overrides
+  const mergedProducts = useMemo(() => {
+    const savedProducts = localStorage.getItem('wigProducts');
+    if (savedProducts) {
+      try {
+        const editedProducts = JSON.parse(savedProducts);
+        console.log('Merging with edited products:', editedProducts);
+        
+        // Create a map of edited products by ID for quick lookup
+        const editedProductsMap = new Map(editedProducts.map(p => [p.id, p]));
+        
+        // Start with original products and override with edited versions
+        const merged = originalProducts.map(originalProduct => {
+          const editedVersion = editedProductsMap.get(originalProduct.id);
+          if (editedVersion) {
+            // Merge edited version with original, preserving position if set
+            return {
+              ...originalProduct,
+              ...editedVersion,
+              id: originalProduct.id // Ensure ID is preserved
+            };
+          }
+          return originalProduct;
+        });
+        
+        // Sort by position to ensure proper ordering
+        merged.sort((a, b) => {
+          const aPos = a.position !== undefined ? a.position : 999;
+          const bPos = b.position !== undefined ? b.position : 999;
+          return aPos - bPos;
+        });
+        
+        console.log('Final merged products:', merged);
+        return merged;
+      } catch (error) {
+        console.error('Error parsing saved products:', error);
+        return originalProducts;
+      }
+    }
+    return originalProducts;
+  }, [currentProducts]);
+
+  useEffect(() => {
+    localStorage.setItem('wigProducts', JSON.stringify(currentProducts));
+  }, [currentProducts]);
+
+  // Listen for changes from admin dashboard
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'wigProducts') {
+        console.log('Shop detected admin changes via storage, updating products');
+        const newProducts = e.newValue ? JSON.parse(e.newValue) : originalProducts;
+        setCurrentProducts(newProducts);
+      }
+    };
+
+    const handleProductsUpdated = (e) => {
+      console.log('Shop detected admin changes via custom event, updating products');
+      setCurrentProducts(e.detail);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    
+    // Also check for changes on focus (for same-tab updates)
+    const handleFocus = () => {
+      const savedProducts = localStorage.getItem('wigProducts');
+      if (savedProducts) {
+        try {
+          const newProducts = JSON.parse(savedProducts);
+          setCurrentProducts(newProducts);
+        } catch (error) {
+          console.error('Error parsing products on focus:', error);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const [addedIds, setAddedIds] = useState(() => new Set())
-  const addedTimers = useRef({})
+  const addedTimers = React.useRef({})
 
   useEffect(() => {
     return () => {
@@ -82,28 +190,29 @@ const Shop = () => {
   const [category, setCategory] = useState('all');
 
   const displayedProducts = useMemo(() => {
-    let list = [...products];
+    let list = [...mergedProducts];
+    
+    // Sort by position first, then by original order if no position
+    list.sort((a, b) => {
+      const aPos = a.position !== undefined ? a.position : 999;
+      const bPos = b.position !== undefined ? b.position : 999;
+      return aPos - bPos;
+    });
     
     if (category && category !== 'all') {
-      if (category === 'lace') list = list.filter((p) => /lace/i.test(p.title));
-      if (category === 'human') list = list.filter((p) => /human/i.test(p.title));
-      if (category === 'synthetic') list = list.filter((p) => /synthetic/i.test(p.title));
-      if (category === 'curly') list = list.filter((p) => /curly|wave|curl/i.test(p.title));
-      if (category === 'straight') list = list.filter((p) => /straight|bob/i.test(p.title));
-      if (category === 'colored') list = list.filter((p) => /color|blonde|brunette|red|grey|fashion|ombre|highlight|balayage/i.test(p.title));
+      if (category === 'lace') list = list.filter((p) => /lace/i.test(p.name));
+      if (category === 'human') list = list.filter((p) => /human/i.test(p.name));
+      if (category === 'synthetic') list = list.filter((p) => /synthetic/i.test(p.name));
+      if (category === 'curly') list = list.filter((p) => /curly|wave|curl/i.test(p.name));
+      if (category === 'straight') list = list.filter((p) => /straight|bob/i.test(p.name));
+      if (category === 'colored') list = list.filter((p) => /color|blonde|brunette|red|grey|fashion|ombre|highlight|balayage/i.test(p.name));
       if (category === 'accessories') list = []; // Show no wigs when accessories category is selected
     }
     if (sort === 'low-high') return list.sort((a, b) => a.price - b.price);
     if (sort === 'high-low') return list.sort((a, b) => b.price - a.price);
-    // Shuffle products in default sort
-    if (sort === 'default') {
-      for (let i = list.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [list[i], list[j]] = [list[j], list[i]];
-      }
-    }
+    // Keep products in position order for 'default' sort
     return list;
-  }, [sort, category]);
+  }, [mergedProducts, sort, category]);
 
   return (
     <>
@@ -224,10 +333,10 @@ const Shop = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {displayedProducts.map((p) => {
-              console.log('Shop generating link for:', p.id, p.title, 'Link:', `/product/${p.id}`)
+            {displayedProducts.map((p, index) => {
+              console.log('Shop generating link for:', p.id, p.name, 'Link:', `/product/${p.id}`)
               return (
-              <div key={p.id} className="product-card rounded-lg overflow-hidden" style={{
+              <div key={p.id} className="product-card rounded-lg overflow-hidden relative" style={{
                 backgroundColor: 'white',
               }}>
                 <div className="h-50 md:h-80 bg-gray-100 flex items-center justify-center overflow-hidden relative">
@@ -239,21 +348,14 @@ const Shop = () => {
                       onTouchStart={() => preloadImages(p)}
                       onPointerOver={() => preloadImages(p)}
                     >
-                      <img src={p.image} alt={p.title} data-product-image="true" className="w-full h-full object-cover" />
+                      <img src={p.image} alt={p.name} data-product-image="true" className="w-full h-full object-cover" />
                     </Link>
                     {p.soldOut && <img src={soldBadge} alt="Sold out" className="absolute top-2 right-2 w-12 h-12 pointer-events-none" />}
                   </div>
 
                 <div className="p-4 text-center">
-                  <div className="text-[8px] tracking-widest uppercase text-gray-700 font-semibold -mt-1">{p.title}</div>
+                  <div className="text-[10px] tracking-widest uppercase text-gray-700 font-semibold -mt-1">{p.name}</div>
                   <div className="mt-2 font-semibold text-xs">{`₦ ${Number(p.price).toLocaleString()}`}</div>
-
-                  <div className="-mt-2 text-yellow-400">
-                    {Array.from({ length: Math.floor(p.rating) }).map((_, i) => (
-                      <span key={i} className="text-[10px] leading-none mr-0.5">★</span>
-                    ))}
-                    <span className="text-[10px] text-gray-500 ml-2 leading-none">{p.rating}</span>
-                  </div>
 
                   {(() => {
                     const isAdded = addedIds.has(p.id)

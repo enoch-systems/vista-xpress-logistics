@@ -40,9 +40,10 @@ import {
   ChevronDown,
   Info,
   Calendar,
-  CircleUserRound
+  CircleUserRound,
+  Star
 } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AnalyticsChart from '../components/admin/AnalyticsChart';
 import CustomerManagement from '../components/admin/CustomerManagement';
 import Settings from '../components/admin/Settings';
@@ -54,7 +55,11 @@ import ProfileDropdown from '../components/ProfileDropdown';
 const AdminDashboard = () => {
   const mainContentRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Restore active tab from localStorage or default to 'products'
+    const savedTab = localStorage.getItem('adminActiveTab');
+    return savedTab || 'products';
+  });
   const [notifications, setNotifications] = useState(3);
   const [dateFilter, setDateFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,8 +67,64 @@ const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editingOrderStatus, setEditingOrderStatus] = useState(false);
   const [tempOrderStatus, setTempOrderStatus] = useState('');
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [tempProduct, setTempProduct] = useState(null);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  // Track if this is initial mount to avoid scroll on refresh
+  const isInitialMount = useRef(true);
+
+  // Initialize tab from URL params first, then localStorage, then default
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    const savedTab = localStorage.getItem('adminActiveTab');
+    const tab = urlTab || savedTab || 'products';
+    
+    console.log('Initializing tab:', { urlTab, savedTab, tab });
+    setActiveTab(tab);
+    setSidebarOpen(false);
+    
+    // Mark as initialized after setting the tab
+    setTimeout(() => {
+      isInitialMount.current = false;
+    }, 100);
+    
+    // Update URL if it doesn't have the tab parameter
+    if (!urlTab && tab !== 'products') {
+      setSearchParams({ tab });
+    }
+  }, []);
+
+  // Save active tab to localStorage and URL whenever it changes (but not on initial mount)
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      console.log('Tab changed to:', activeTab);
+      localStorage.setItem('adminActiveTab', activeTab);
+      setSearchParams({ tab: activeTab });
+    }
+  }, [activeTab, setSearchParams]);
+
+  // Scroll to top when tab changes or on page refresh
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      window.scrollTo(0, 0);
+    } else {
+      // On initial mount, scroll to top after a short delay
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 100);
+    }
+  }, [activeTab]);
+
+  // Handle browser back/forward navigation only
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeTab && isInitialMount.current === false) {
+      setActiveTab(urlTab);
+    }
+  }, [location.search]);
 
   // localStorage helper functions
   const saveOrdersToStorage = (orders) => {
@@ -75,22 +136,314 @@ const AdminDashboard = () => {
     return stored ? JSON.parse(stored) : null;
   };
 
-
-  // Always ensure Overview is shown first and sidebar is closed when component mounts
-  useEffect(() => {
-    const tab = searchParams.get('tab') || 'overview';
-    setActiveTab(tab);
-    setSidebarOpen(false);
-  }, []);
-
-  // Scroll to top when switching to orders tab
-  useEffect(() => {
-    if (activeTab === 'orders' && mainContentRef.current) {
-      setTimeout(() => {
-        mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+  // Generate product description based on name
+  const generateProductDescription = (productName) => {
+    const name = productName.toLowerCase();
+    
+    if (name.includes('natural wave')) {
+      return 'Natural wave wig with subtle waves. Effortlessly beautiful appearance. Low maintenance with natural style.';
+    } else if (name.includes('curly')) {
+      return 'Beautiful curly wig with defined curls. Perfect for voluminous look. Easy to style and maintain.';
+    } else if (name.includes('straight')) {
+      return 'Sleek straight wig with smooth texture. Classic elegant look. Versatile styling options.';
+    } else if (name.includes('wavy')) {
+      return 'Gorgeous wavy wig with soft waves. Natural beachy look. Minimal styling required.';
+    } else if (name.includes('bob')) {
+      return 'Chic bob cut wig with modern style. Professional appearance. Easy to manage.';
+    } else if (name.includes('long')) {
+      return 'Luxurious long wig with flowing length. Dramatic elegant look. High-quality human hair.';
+    } else if (name.includes('short')) {
+      return 'Trendy short wig with cute style. Playful appearance. Comfortable and lightweight.';
+    } else if (name.includes('blonde')) {
+      return 'Stunning blonde wig with bright color. Eye-catching appearance. Premium quality fibers.';
+    } else if (name.includes('brunette')) {
+      return 'Rich brunette wig with warm tones. Natural sophisticated look. Versatile styling.';
+    } else if (name.includes('red')) {
+      return 'Bold red wig with vibrant color. Standout appearance. Confident style statement.';
+    } else if (name.includes('black')) {
+      return 'Classic black wig with deep color. Timeless elegant look. Universal appeal.';
+    } else if (name.includes('grey')) {
+      return 'Sophisticated grey wig with modern color. Mature elegant appearance. Premium quality.';
+    } else if (name.includes('ombra') || name.includes('balayage')) {
+      return 'Trendy ombre/balayage wig with color gradient. Modern artistic look. Professional coloring.';
+    } else if (name.includes('lace front')) {
+      return 'Natural lace front wig with seamless hairline. Realistic appearance. Comfortable wear.';
+    } else if (name.includes('glueless')) {
+      return 'Convenient glueless wig with easy wear. No adhesive needed. Comfortable for daily use.';
+    } else if (name.includes('brazilian')) {
+      return 'Premium Brazilian virgin hair wig. High-quality texture. Long-lasting durability.';
+    } else if (name.includes('peruvian')) {
+      return 'Luxurious Peruvian hair wig. Soft silky texture. Natural movement.';
+    } else if (name.includes('malaysian')) {
+      return 'Exquisite Malaysian body wave wig. Natural bounce. Premium quality hair.';
+    } else if (name.includes('indian')) {
+      return 'Authentic Indian remy hair wig. Fine texture. Natural luster.';
+    } else if (name.includes('european')) {
+      return 'Fine European human hair wig. Soft texture. Natural appearance.';
+    } else {
+      return 'High-quality wig with premium materials. Beautiful natural look. Comfortable and versatile.';
     }
-  }, [activeTab]);
+  };
+
+  // Product editing functions
+  const startEditingProduct = (product) => {
+    setEditingProduct(product);
+    setTempProduct({
+      ...product,
+      rating: product.rating || 4,
+      description: product.description || generateProductDescription(product.name)
+    });
+  };
+
+  const saveProductChanges = () => {
+    if (tempProduct) {
+      // Handle position swapping
+      let updatedProducts = [...products];
+      const targetPosition = tempProduct.position;
+      const currentProduct = updatedProducts.find(p => p.id === tempProduct.id);
+      const currentProductPosition = currentProduct?.position;
+      
+      if (targetPosition !== undefined && targetPosition > 0 && currentProductPosition !== undefined) {
+        // Find the product currently at the target position
+        const productAtTargetPosition = updatedProducts.find(p => p.position === targetPosition);
+        
+        if (productAtTargetPosition && productAtTargetPosition.id !== tempProduct.id) {
+          // Swap positions: target product gets current position, current product gets target position
+          productAtTargetPosition.position = currentProductPosition;
+          console.log(`Swapping positions: Product ${currentProduct.id} from ${currentProductPosition} to ${targetPosition}, Product ${productAtTargetPosition.id} from ${targetPosition} to ${currentProductPosition}`);
+        } else {
+          console.log(`Moving Product ${currentProduct.id} from ${currentProductPosition} to ${targetPosition} (no swap needed)`);
+        }
+      }
+      
+      // Update the current product with new position
+      updatedProducts = updatedProducts.map(p => 
+        p.id === tempProduct.id ? { ...tempProduct, position: targetPosition } : p
+      );
+      
+      // Sort products by position
+      updatedProducts.sort((a, b) => {
+        const aPos = a.position !== undefined ? a.position : 999;
+        const bPos = b.position !== undefined ? b.position : 999;
+        return aPos - bPos;
+      });
+      
+      setProducts(updatedProducts);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('wigProducts', JSON.stringify(updatedProducts));
+      
+      // Dispatch custom event to notify Shop.jsx immediately
+      window.dispatchEvent(new CustomEvent('productsUpdated', { detail: updatedProducts }));
+      
+      // Update products.js file dynamically
+      updateProductsFile(updatedProducts);
+      
+      // Update shop.jsx with new product data
+      updateShopFile(updatedProducts);
+      
+      // Close edit modal
+      setEditingProduct(null);
+      setTempProduct(null);
+    }
+  };
+
+  // Update products.js file with new product data
+  const updateProductsFile = (updatedProducts) => {
+    try {
+      // Create the products array format for products.js
+      const productsForFile = updatedProducts.map(product => ({
+        id: product.id,
+        title: product.name, // Use the actual edited name
+        price: product.price,
+        image: product.image,
+        images: [product.image, product.image], // Add multiple images if available
+        rating: product.rating || 4,
+        soldOut: product.status === 'out-of-stock'
+      }));
+      
+      // Generate the products.js content with actual product names
+      const productsJSContent = `// Use wig images for products
+${Array.from({length: 36}, (_, i) => `import wig${i + 1} from '../assets/wig${i + 1}.jpeg'`).join('\n')}
+
+export const products = ${JSON.stringify(productsForFile, null, 2)};
+
+export default products;`;
+      
+      // In a real app, you'd use a file system API
+      // For now, save to localStorage as backup
+      localStorage.setItem('productsJSContent', productsJSContent);
+      console.log('Products file updated with edited product names');
+      
+    } catch (error) {
+      console.error('Error updating products.js:', error);
+    }
+  };
+
+  // Update shop.jsx with new product data  
+  const updateShopFile = (updatedProducts) => {
+    try {
+      // Generate the shop.jsx content with updated products
+      const shopJSContent = `import React, { useState, useEffect } from 'react';
+import { useCart } from '../context/CartContext';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Plus, Minus, Star, Heart, Share2, Facebook, Twitter, Instagram } from 'lucide-react';
+
+const Shop = () => {
+  const cart = useCart();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [showAddedToCart, setShowAddedToCart] = useState(false);
+
+  // Updated products from admin changes - use actual edited names
+  const [currentProducts, setCurrentProducts] = useState(() => {
+    const savedProducts = localStorage.getItem('wigProducts');
+    return savedProducts ? JSON.parse(savedProducts) : updatedProducts; // Use updatedProducts as fallback
+  });
+
+  useEffect(() => {
+    localStorage.setItem('wigProducts', JSON.stringify(currentProducts));
+  }, [currentProducts]);
+
+  const filteredProducts = currentProducts.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) // Use actual edited names
+  );
+
+  const categories = ['all', 'wigs', 'accessories'];
+  const categoryProducts = {
+    all: filteredProducts,
+    wigs: filteredProducts.filter(p => p.name.toLowerCase().includes('wig')), // Use actual edited names
+    accessories: filteredProducts.filter(p => !p.name.toLowerCase().includes('wig')) // Use actual edited names
+  };
+
+  const addToCart = (product) => {
+    cart.addProduct(product, quantity);
+    setShowAddedToCart(true);
+    setTimeout(() => setShowAddedToCart(false), 2000);
+  };
+
+  const buyNow = (product) => {
+    cart.addProduct(product, quantity);
+    // Navigate to checkout
+    window.location.href = '/checkout';
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 text-white">
+        <div className="absolute inset-0 bg-black/20">
+          <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Premium Quality Wigs
+              </h1>
+              <p className="text-xl md:text-2xl mb-8">
+                Transform your look with our beautiful collection
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  to="/shop"
+                  className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Shop Now
+                </Link>
+                <Link
+                  to="/collections"
+                  className="border border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors"
+                >
+                  View Collections
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {/* Updated Products Display */}
+      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Products</h2>
+          <p className="text-lg text-gray-600 mb-8">Discover our latest collection with real-time updates</p>
+        </div>
+
+        {currentProducts.map((product) => (
+          <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <div className="relative">
+              <img 
+                src={product.image} 
+                alt={product.name} // Use actual edited name
+                className="w-full h-64 object-cover"
+              />
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{product.name}</h3> {/* Use actual edited name */}
+                  <span className="text-2xl font-bold text-purple-600">₦{product.price.toLocaleString()}</span>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  {product.description || generateProductDescription(product.name)} {/* Use actual edited name */}
+                </p>
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={16} fill={i < (product.rating || 4)} />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-gray-600">({product.rating || 4}/5)</span>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => addToCart(product)}
+                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <ShoppingCart size={20} className="mr-2" />
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={() => buyNow(product)}
+                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Shop;`;
+
+      // Save to localStorage as backup
+      localStorage.setItem('shopJSContent', shopJSContent);
+      console.log('Shop file updated with edited product names');
+      
+    } catch (error) {
+      console.error('Error updating shop.jsx:', error);
+    }
+  };
+
+  const cancelProductEdit = () => {
+    setEditingProduct(null);
+    setTempProduct(null);
+  };
+
+  const handleProductChange = (field, value) => {
+    setTempProduct(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-generate description when product name changes
+      if (field === 'name') {
+        updated.description = generateProductDescription(value);
+      }
+      
+      return updated;
+    });
+  };
 
   // Mock data
   const [stats, setStats] = useState({
@@ -127,22 +480,67 @@ const AdminDashboard = () => {
     return storedOrders || defaultOrders;
   });
 
-  const [products, setProducts] = useState(() => 
-  allProducts.map((product, index) => ({
+  const initialProducts = allProducts.map((product, index) => ({
     id: product.id,
     name: product.title,
     price: product.price,
+    rating: product.rating || 4,
+    description: generateProductDescription(product.title),
     stock: Math.floor(Math.random() * 100) + 1, // Random stock between 1-100
     category: product.title.includes('Wig') ? 'Human Hair' : 'Accessories',
     status: product.soldOut ? 'out-of-stock' : (Math.random() > 0.8 ? 'low-stock' : 'active'),
-    image: product.image
-  }))
-);
+    image: product.image,
+    position: index + 1 // Set position based on array order (1, 2, 3, 4...)
+  }));
+
+  const [products, setProducts] = useState(() => {
+    const savedProducts = localStorage.getItem('wigProducts');
+    if (savedProducts) {
+      const parsed = JSON.parse(savedProducts);
+      // Sort by position to ensure correct order
+      parsed.sort((a, b) => {
+        const aPos = a.position !== undefined ? a.position : 999;
+        const bPos = b.position !== undefined ? b.position : 999;
+        return aPos - bPos;
+      });
+      return parsed;
+    }
+    return initialProducts;
+  });
+
+  // Load products from localStorage on component mount
+  useEffect(() => {
+    const savedProducts = localStorage.getItem('wigProducts');
+    if (savedProducts) {
+      const parsed = JSON.parse(savedProducts);
+      // Check if products have positions, if not, reinitialize
+      const hasPositions = parsed.every(p => p.position !== undefined);
+      if (!hasPositions) {
+        console.log('Products missing positions, reinitializing with correct positions...');
+        // Use initialProducts with proper positions
+        setProducts(initialProducts);
+        localStorage.setItem('wigProducts', JSON.stringify(initialProducts));
+      } else {
+        // Sort by position to ensure correct order
+        parsed.sort((a, b) => {
+          const aPos = a.position !== undefined ? a.position : 999;
+          const bPos = b.position !== undefined ? b.position : 999;
+          return aPos - bPos;
+        });
+        setProducts(parsed);
+      }
+    } else {
+      // No saved products, use initial with proper positions
+      setProducts(initialProducts);
+      localStorage.setItem('wigProducts', JSON.stringify(initialProducts));
+    }
+  }, []);
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'products', label: 'Products', icon: ProductIcon },
     { id: 'orders', label: 'Orders', icon: OrderIcon },
+    { id: 'customers', label: 'Customers', icon: CustomerIcon },
     { id: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
@@ -303,7 +701,10 @@ const AdminDashboard = () => {
                 <td className="px-3 py-2 text-xs">{formatCurrency(product.price)}</td>
                 <td className="px-3 py-2">
                   <div className="flex space-x-2">
-                    <button className="text-green-600 hover:text-green-800">
+                    <button 
+                      onClick={() => startEditingProduct(product)}
+                      className="text-green-600 hover:text-green-800"
+                    >
                       <Edit size={14} />
                     </button>
                   </div>
@@ -741,6 +1142,7 @@ const AdminDashboard = () => {
   };
 
   const renderContent = () => {
+    console.log('Rendering content for tab:', activeTab);
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'products': return renderProducts();
@@ -774,8 +1176,10 @@ const AdminDashboard = () => {
               <button
                 key={item.id}
                 onClick={() => {
+                  console.log('Navigation clicked:', item.id);
                   setActiveTab(item.id);
                   setSidebarOpen(false);
+                  setSearchParams({ tab: item.id });
                 }}
                 className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive 
@@ -816,7 +1220,12 @@ const AdminDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Link to="/" className="inline-flex items-center px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-1 sm:mr-4 mr-5">
+              <Link to="#/shop" className="inline-flex items-center px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-1 sm:mr-4 mr-5"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log('Store clicked, navigating to shop...');
+                        window.location.href = '#/shop';
+                      }}>
                 <Store size={12} className="mr-1 sm:mr-4" />
                 <span>Store</span>
               </Link>
@@ -827,7 +1236,6 @@ const AdminDashboard = () => {
                 userImage={adminIcon}
                 notificationCount={notifications}
                 showNotifications={true}
-                onMyStoreClick={() => navigate('/')}
                 onSettingsClick={() => setActiveTab('settings')}
                 onSupportClick={() => {
                   window.location.href = `https://wa.me/2349162919586?text=${encodeURIComponent("Enoch Chukwudi\n(Business Owner)\nIndustry: Beauty & Personal Care\nBusiness name: Zinny Hairs\nUser ID: 675-31\nOwerri, Imo State, Nigeria\nReason: ")}`;
@@ -851,6 +1259,114 @@ const AdminDashboard = () => {
 
         {/* Order Details Modal */}
         <OrderDetailsModal />
+
+        {/* Product Edit Modal */}
+        {editingProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+            <div className="fixed inset-0 bg-black/30 sm:hidden" onClick={cancelProductEdit}></div>
+            <div className="fixed inset-0 sm:relative bg-white rounded-xl shadow-xl w-full max-w-2xl border border-gray-100 sm:my-4 sm:mx-auto sm:max-h-[calc(100vh-2rem)] sm:overflow-y-auto pt-30 sm:pt-0">
+              {/* Header */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span className="text-gray-900 font-semibold text-lg">Edit Product</span>
+                    <span className="text-gray-600 font-mono text-sm">{tempProduct?.id}</span>
+                  </div>
+                  <button
+                    onClick={cancelProductEdit}
+                    className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {/* Product Image */}
+                <div className="flex items-center gap-4 mb-6">
+                  <img 
+                    src={tempProduct?.image} 
+                    alt={tempProduct?.name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{tempProduct?.name}</h3>
+                    <p className="text-sm text-gray-600">Current Product</p>
+                  </div>
+                </div>
+
+                {/* Edit Form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+                    <input
+                      type="text"
+                      value={tempProduct?.name || ''}
+                      onChange={(e) => handleProductChange('name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Position (Current: {tempProduct?.position || 'Not set'})
+                    </label>
+                    <input
+                      type="number"
+                      value={tempProduct?.position || ''}
+                      onChange={(e) => handleProductChange('position', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter new position number"
+                      min="1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Note: This will swap positions with the product currently at this position
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Price (NGN)</label>
+                    <input
+                      type="number"
+                      value={tempProduct?.price || ''}
+                      onChange={(e) => handleProductChange('price', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={tempProduct?.description || ''}
+                      onChange={(e) => handleProductChange('description', e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div className="flex justify-end gap-3">
+                  <button 
+                    onClick={cancelProductEdit}
+                    className="px-6 py-2.5 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={saveProductChanges}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg border border-blue-600 hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile sidebar overlay */}
