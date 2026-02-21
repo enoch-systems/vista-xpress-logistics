@@ -26,6 +26,7 @@ import {
   Eye,
   Edit,
   Trash,
+  Trash2,
   Check,
   CheckCircle,
   X as CloseIcon,
@@ -45,7 +46,10 @@ import {
   Info,
   Calendar,
   CircleUserRound,
-  Star
+  Star,
+  Timer,
+  PackageCheck,
+  Hourglass
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AnalyticsChart from '../components/admin/AnalyticsChart';
@@ -73,6 +77,17 @@ const AdminDashboard = () => {
   const [tempOrderStatus, setTempOrderStatus] = useState('');
   const [editingProduct, setEditingProduct] = useState(null);
   const [tempProduct, setTempProduct] = useState(null);
+
+  // removal mode and undo state
+  const [removeMode, setRemoveMode] = useState(false);
+  const [recentlyRemoved, setRecentlyRemoved] = useState(null); // {product, index}
+  const [undoVisible, setUndoVisible] = useState(false);
+  const [deletedProducts, setDeletedProducts] = useState(() => {
+    const savedDeleted = localStorage.getItem('deletedProducts');
+    return savedDeleted ? JSON.parse(savedDeleted) : [];
+  });
+  const undoTimer = useRef(null);
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
@@ -207,6 +222,104 @@ const AdminDashboard = () => {
       rating: product.rating || 4,
       description: product.description || generateProductDescription(product.name)
     });
+  };
+
+
+  // toggle removal mode on/off
+  const toggleRemoveMode = () => {
+    setRemoveMode(prev => !prev);
+    // clear any undo info when entering/exiting mode
+    setRecentlyRemoved(null);
+    setUndoVisible(false);
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+  };
+
+  const removeProduct = (product) => {
+    // remove from list and persist
+    setProducts(prev => {
+      const idx = prev.findIndex(p => p.id === product.id);
+      if (idx === -1) return prev;
+      const updated = [...prev];
+      updated.splice(idx, 1);
+      // persist immediately
+      localStorage.setItem('wigProducts', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('productsUpdated', { detail: updated }));
+      updateProductsFile(updated);
+      updateShopFile(updated);
+      // store undo info
+      setRecentlyRemoved({ product, index: idx });
+      setUndoVisible(true);
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+      undoTimer.current = setTimeout(() => {
+        setUndoVisible(false);
+        setRecentlyRemoved(null);
+      }, 5000);
+      return updated;
+    });
+    
+    // Add to deleted products list
+    setDeletedProducts(prev => {
+      const updated = [...prev, product];
+      localStorage.setItem('deletedProducts', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const undoRemove = () => {
+    if (!recentlyRemoved) return;
+    setProducts(prev => {
+      const updated = [...prev];
+      const { product, index } = recentlyRemoved;
+      updated.splice(index, 0, product);
+      // persist immediately
+      localStorage.setItem('wigProducts', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('productsUpdated', { detail: updated }));
+      updateProductsFile(updated);
+      updateShopFile(updated);
+      return updated;
+    });
+    setUndoVisible(false);
+    setRecentlyRemoved(null);
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+  };
+
+  const recoverProduct = (index) => {
+    const productToRecover = deletedProducts[index];
+    if (!productToRecover) return;
+    
+    // Add back to products list
+    setProducts(prev => {
+      const updated = [...prev, productToRecover];
+      // persist immediately
+      localStorage.setItem('wigProducts', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('productsUpdated', { detail: updated }));
+      updateProductsFile(updated);
+      updateShopFile(updated);
+      return updated;
+    });
+    
+    // Remove from deleted products
+    setDeletedProducts(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      localStorage.setItem('deletedProducts', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const permanentlyDeleteProduct = (index) => {
+    const product = deletedProducts[index];
+    if (!product) return;
+    
+    // Show confirmation dialog before permanent deletion
+    if (window.confirm(`Are you sure you want to permanently delete "${product.name}"? This action cannot be undone.`)) {
+      setDeletedProducts(prev => {
+        const updated = [...prev];
+        updated.splice(index, 1);
+        localStorage.setItem('deletedProducts', JSON.stringify(updated));
+        return updated;
+      });
+    }
   };
 
   const saveProductChanges = () => {
@@ -585,7 +698,6 @@ export default Shop;`;
     { id: 'overview', label: 'Overview', icon: Home },
     { id: 'products', label: 'Products', icon: ProductIcon },
     { id: 'orders', label: 'Orders', icon: OrderIcon },
-    { id: 'customers', label: 'Customers', icon: CustomerIcon },
     { id: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
@@ -600,24 +712,24 @@ export default Shop;`;
         label: 'Delivered'
       },
       processing: {
-        icon: Clock,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        borderColor: 'border-blue-200',
+        icon: Timer,
+        color: 'text-gray-800',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-200',
         label: 'Processing'
       },
       shipped: {
-        icon: Truck,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        borderColor: 'border-purple-200',
+        icon: PackageCheck,
+        color: 'text-gray-800',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-200',
         label: 'Shipped'
       },
       pending: {
-        icon: AlertCircle,
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-100',
-        borderColor: 'border-amber-200',
+        icon: Hourglass,
+        color: 'text-gray-800',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-200',
         label: 'Pending'
       }
     };
@@ -650,7 +762,7 @@ export default Shop;`;
   };
 
   const StatCard = ({ title, value, icon: Icon, growth, isPositive }) => (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-gray-50 rounded-lg shadow-md p-6 border border-gray-200">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600">{title}</p>
@@ -664,8 +776,8 @@ export default Shop;`;
             </div>
           )}
         </div>
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <Icon size={24} className="text-blue-600" />
+        <div className="bg-white p-3 rounded-lg shadow-sm">
+          <Icon size={24} className="text-gray-800" />
         </div>
       </div>
     </div>
@@ -754,19 +866,28 @@ export default Shop;`;
     };
 
     return (
+      <>
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-            <button className="bg-blue-400 hover:bg-blue-500 text-white px-4 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm">
-              <PlusCircle size={18} />
-              <span className="text-sm">Add Product</span>
+          <div className="flex flex-col gap-2 max-w-xs mx-auto">
+            <button className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 rounded-lg flex items-center justify-center space-x-1 transition-all duration-200 shadow-sm">
+              <PlusCircle size={14} />
+              <span className="text-xs">Add Product</span>
             </button>
-            <button 
-              onClick={regenerateDescriptions} 
-              className="bg-red-400 hover:bg-red-500 text-white px-4 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm"
+            <button
+              onClick={regenerateDescriptions}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-2 rounded-lg flex items-center justify-center space-x-1 transition-all duration-200 shadow-sm"
+              title="Regenerate descriptions"
             >
-              <Trash size={18} />
-              <span className="text-sm">Remove Product</span>
+              <RefreshCw size={14} />
+              <span className="text-xs">Refresh Desc</span>
+            </button>
+            <button
+              onClick={toggleRemoveMode}
+              className={`${removeMode ? 'bg-green-300 text-green-900' : 'bg-red-300 text-red-900'} px-2 py-2 rounded-lg flex items-center justify-center space-x-1 transition-all duration-200 shadow-sm`}
+            >
+              <Trash size={14} />
+              <span className="text-xs">{removeMode ? 'Done' : 'Remove Products'}</span>
             </button>
           </div>
         </div>
@@ -775,8 +896,14 @@ export default Shop;`;
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
+                {removeMode ? (
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remove</th>
+                ) : (
+                  <>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -792,15 +919,29 @@ export default Shop;`;
                       <span className="font-medium text-xs sm:text-sm truncate" title={product.name}>{product.name}</span>
                     </div>
                   </td>
-                  <td className="px-2 py-4 text-xs sm:text-sm">₦{product.price.toLocaleString()}</td>
-                  <td className="px-2 py-4">
-                    <button
-                      onClick={() => startEditingProduct(product)}
-                      className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
-                    >
-                      Edit
-                    </button>
-                  </td>
+                  {removeMode ? (
+                    <td className="px-2 py-4">
+                      <button
+                        onClick={() => removeProduct(product)}
+                        className="text-red-600 hover:text-red-800 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                      >
+                        <Trash size={14} />
+                        <span>Remove</span>
+                      </button>
+                    </td>
+                  ) : (
+                    <>
+                      <td className="px-2 py-4 text-xs sm:text-sm">₦{product.price.toLocaleString()}</td>
+                      <td className="px-2 py-4">
+                        <button
+                          onClick={() => startEditingProduct(product)}
+                          className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -808,6 +949,13 @@ export default Shop;`;
         </div>
 
         {/* Products Pagination */}
+        {/* undo notification */}
+        {undoVisible && recentlyRemoved && (
+          <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center space-x-3 shadow-lg">
+            <span>Removed {recentlyRemoved.product.name}</span>
+            <button onClick={undoRemove} className="text-blue-300 underline text-xs">Undo</button>
+          </div>
+        )}
         {totalPages > 1 && (
           <div className="bg-gray-50 px-3 py-3 sm:px-4 sm:py-3 border-t border-gray-200">
             <div className="flex items-center justify-center gap-2">
@@ -857,6 +1005,61 @@ export default Shop;`;
           </div>
         )}
       </div>
+      
+      {/* Recently Deleted Section */}
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Trash2 size={16} />
+            Recently Deleted
+          </h3>
+          <span className="text-xs text-gray-500">
+            {deletedProducts?.length || 0} items
+          </span>
+        </div>
+        
+        {deletedProducts && deletedProducts.length > 0 ? (
+          <div className="space-y-2">
+            {deletedProducts.map((product, index) => (
+              <div key={index} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={product.image || '/placeholder.jpg'} 
+                    alt={product.name}
+                    className="w-10 h-10 rounded object-cover border border-gray-200"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                    <p className="text-xs text-gray-500">{formatCurrency(product.price)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => recoverProduct(index)}
+                    className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-md hover:bg-green-200 transition-colors flex items-center gap-1"
+                  >
+                    <RefreshCw size={12} />
+                    Recover
+                  </button>
+                  <button
+                    onClick={() => permanentlyDeleteProduct(index)}
+                    className="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-md hover:bg-red-200 transition-colors flex items-center gap-1"
+                    title="Permanently delete (cannot be undone)"
+                  >
+                    <Trash size={12} />
+                    Delete Forever
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">
+            No recently deleted items
+          </p>
+        )}
+      </div>
+    </>
     );
   };
 
@@ -940,40 +1143,15 @@ export default Shop;`;
                       </span>
                     </div>
                     <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
-                      <StatusIcon className={`w-3.5 h-3.5 ${statusConfig.color}`} />
-                      <span className={`text-xs font-medium ${statusConfig.color}`}>
+                      <StatusIcon className={`w-3.5 h-3.5 text-gray-800`} />
+                      <span className={`text-xs font-medium text-gray-800`}>
                         {statusConfig.label}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center text-sm text-gray-700">
-                      <span className="font-medium">Customer:</span>
-                      <span className="ml-2 text-gray-900">{order.customer}</span>
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-gray-700">
-                      <span className="font-medium">Amount:</span>
-                      <span className="ml-2 text-gray-900 font-bold">{formatCurrency(order.amount)}</span>
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-gray-700">
-                      <span className="font-medium">Items:</span>
-                      <span className="ml-2 text-gray-900">{order.items.length}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-700">
-                      <div className="flex items-center">
-                        <span className="font-medium">Date:</span>
-                        <span className="ml-2 text-gray-900">{order.date.split(' ')[0]}</span>
-                      </div>
-                      <span className="text-gray-500">{order.date.split(' ')[1]}</span>
-                    </div>
-                  </div>
-                  
                   <div className="flex justify-center">
-                    <button onClick={() => setSelectedOrder(order)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:border-blue-300 transition-colors">
+                    <button onClick={() => setSelectedOrder(order)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-800 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:border-gray-300 transition-colors">
                       View order details
                       <ChevronDown size={12} />
                     </button>
@@ -1041,10 +1219,10 @@ export default Shop;`;
     
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-        <div className="fixed inset-0 bg-black/30 sm:hidden" onClick={() => setSelectedOrder(null)}></div>
-        <div className="fixed inset-0 sm:relative bg-white rounded-xl shadow-xl w-full max-w-3xl border border-gray-100 sm:my-4 sm:mx-auto sm:max-h-[calc(100vh-2rem)] sm:overflow-y-auto pt-30 sm:pt-0">
+        <div className="fixed inset-0 bg-black/30" onClick={() => setSelectedOrder(null)}></div>
+        <div className="relative bg-white rounded-xl shadow-xl w-full h-full max-w-full border border-gray-100 overflow-y-auto">
           {/* Header */}
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 sticky top-0 z-20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -1142,7 +1320,7 @@ export default Shop;`;
                               value={status}
                               checked={tempOrderStatus === status}
                               onChange={(e) => setTempOrderStatus(e.target.value)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                              className="w-4 h-4 text-gray-800 border-gray-300 focus:ring-gray-500"
                             />
                             <span className={`text-sm font-medium capitalize ${getStatusConfig(status).color}`}>
                               {getStatusConfig(status).label}
@@ -1211,7 +1389,7 @@ export default Shop;`;
                       setEditingOrderStatus(true);
                       setTempOrderStatus(selectedOrder.status);
                     }}
-                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors font-medium text-sm"
+                    className="px-4 py-2 bg-gray-50 text-gray-800 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors font-medium text-sm"
                   >
                     Update Order
                   </button>
@@ -1288,14 +1466,41 @@ export default Shop;`;
 
   const renderContent = () => {
     console.log('Rendering content for tab:', activeTab);
-    switch (activeTab) {
-      case 'overview': return renderOverview();
-      case 'products': return renderProducts();
-      case 'orders': return renderOrders();
-      case 'customers': return <CustomerManagement />;
-      case 'analytics': return renderAnalytics();
-      case 'settings': return <Settings />;
-      default: return renderOverview();
+    try {
+      // Always render components, but hide them with CSS when not active
+      return (
+        <div>
+          <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
+            {renderOverview()}
+          </div>
+          <div style={{ display: activeTab === 'products' ? 'block' : 'none' }}>
+            {renderProducts()}
+          </div>
+          <div style={{ display: activeTab === 'orders' ? 'block' : 'none' }}>
+            {renderOrders()}
+          </div>
+          <div style={{ display: activeTab === 'analytics' ? 'block' : 'none' }}>
+            {renderAnalytics()}
+          </div>
+          <div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
+            <Settings key="settings" />
+          </div>
+        </div>
+      );
+    } catch (error) {
+      console.error('Error rendering content for tab:', activeTab, error);
+      return (
+        <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <h3 className="text-lg font-semibold mb-4">Error Loading Content</h3>
+          <p className="text-gray-600">There was an error loading the {activeTab} content. Please try refreshing the page.</p>
+          <button 
+            onClick={() => setActiveTab('overview')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Go to Overview
+          </button>
+        </div>
+      );
     }
   };
 
@@ -1304,7 +1509,9 @@ export default Shop;`;
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
         <div className="flex items-center justify-between h-20 px-6 border-b border-gray-100">
-          <h1 className="text-lg font-bold text-gray-900">Vendor Dashboard</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-800 bg-clip-text text-transparent">
+            Vendor Dashboard
+          </h1>
           <button 
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-500 hover:text-gray-700"
@@ -1328,14 +1535,14 @@ export default Shop;`;
                 }}
                 className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-50 text-blue-600' 
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white shadow-md transform scale-105 border border-gray-600' 
+                    : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                 }`}
               >
                 <Icon size={18} className="mr-4 flex-shrink-0" />
                 <span className="text-left">{item.label}</span>
                 {isActive && (
-                  <div className="ml-auto w-1 h-6 bg-blue-600 rounded-r-full"></div>
+                  <div className="ml-auto w-1 h-6 bg-gray-800 rounded-r-full"></div>
                 )}
               </button>
             );
@@ -1381,6 +1588,7 @@ export default Shop;`;
                 userImage={adminIcon}
                 notificationCount={notifications}
                 showNotifications={true}
+                onMyStoreClick={() => setActiveTab('overview')}
                 onSettingsClick={() => setActiveTab('settings')}
                 onSupportClick={() => {
                   window.location.href = `https://wa.me/2349162919586?text=${encodeURIComponent("Enoch Chukwudi\n(Business Owner)\nIndustry: Beauty & Personal Care\nBusiness name: Zinny Hairs\nUser ID: 675-31\nOwerri, Imo State, Nigeria\nReason: ")}`;
@@ -1407,11 +1615,13 @@ export default Shop;`;
 
         {/* Product Edit Modal */}
         {editingProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-            <div className="fixed inset-0 bg-black/30 sm:hidden" onClick={cancelProductEdit}></div>
-            <div className="fixed inset-0 sm:relative bg-white rounded-xl shadow-xl w-full max-w-2xl border border-gray-100 sm:my-4 sm:mx-auto sm:max-h-[calc(100vh-2rem)] sm:overflow-y-auto pt-30 sm:pt-0">
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-0 overflow-y-auto" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+            {/* dim background always clickable to close */}
+            <div className="fixed inset-0 bg-black/30" onClick={cancelProductEdit}></div>
+            {/* fullscreen white panel */}
+            <div className="relative bg-white w-full h-full overflow-y-auto border border-gray-100">
               {/* Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 sticky top-0 z-20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -1472,27 +1682,39 @@ export default Shop;`;
 
                   {/* Modal Images */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Product Gallery Images (Max 5)</label>
-                    <div className="grid grid-cols-5 gap-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail Images (Max 5)</label>
+                    <div className="flex space-x-3 overflow-x-auto pb-2">
                       {[...Array(5)].map((_, index) => {
                         const modalImage = tempProduct?.modalImages?.[index];
                         return (
-                          <div key={index} className="relative">
+                          <div key={index} className="flex-shrink-0 flex flex-col items-center">
                             {modalImage ? (
-                              <div className="relative group">
-                                <img 
-                                  src={modalImage} 
-                                  alt={`Gallery ${index + 1}`}
-                                  className="w-full h-20 rounded-lg object-cover border border-gray-200"
-                                />
+                              <>
+                                <div className="relative">
+                                  <img 
+                                    src={modalImage} 
+                                    alt={`Thumbnail ${index + 1}`}
+                                    className="w-full h-20 rounded-lg object-cover border border-gray-200"
+                                  />
+                                  {/* always-visible delete overlay */}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeModalImage(index)}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-10"
+                                    aria-label="Remove thumbnail"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                                {/* secondary remove link below thumbnail */}
                                 <button
                                   type="button"
                                   onClick={() => removeModalImage(index)}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="mt-1 text-xs text-red-600 hover:underline"
                                 >
-                                  ×
+                                  Remove
                                 </button>
-                              </div>
+                              </>
                             ) : (
                               <div className="w-full h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 transition-colors">
                                 <input
@@ -1507,7 +1729,7 @@ export default Shop;`;
                                   className="cursor-pointer text-gray-400 hover:text-gray-600 text-xs text-center"
                                 >
                                   <div>+</div>
-                                  <div>Image</div>
+                                  <div>Thumb</div>
                                 </label>
                               </div>
                             )}
@@ -1516,7 +1738,7 @@ export default Shop;`;
                       })}
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Click empty slots to upload product gallery images. These will appear in the product detail view.
+                      Upload thumbnail images for product gallery. If you upload 2 images, exactly 2 will show. If 3, exactly 3 will show, etc.
                     </p>
                   </div>
 
