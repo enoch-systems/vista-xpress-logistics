@@ -111,6 +111,10 @@ function Dynamic({ product: propProduct }) {
       if (found && !found.description) {
         found.description = generateProductDescription(found.name || found.title);
       }
+      // Ensure rating has a default value
+      if (found && !found.rating) {
+        found.rating = 4.0;
+      }
       console.log('Accessory lookup result:', found?.title || 'Not found')
       return found || products[1]
     }
@@ -128,6 +132,10 @@ function Dynamic({ product: propProduct }) {
       if (found && !found.description) {
         found.description = generateProductDescription(found.name || found.title);
       }
+      // Ensure rating has a default value
+      if (found && !found.rating) {
+        found.rating = 4.0;
+      }
       console.log('Numeric accessory lookup - productId:', productId, 'accessoryId:', accessoryId, 'result:', found?.title || 'Not found')
       return found || products[1]
     }
@@ -143,6 +151,10 @@ function Dynamic({ product: propProduct }) {
       // Generate description if not present
       if (found && !found.description) {
         found.description = generateProductDescription(found.name || found.title);
+      }
+      // Ensure rating has a default value
+      if (found && !found.rating) {
+        found.rating = 4.0;
       }
       console.log('Main product lookup - productId:', productId, 'result:', found?.title || 'Not found')
       return found || products[1]
@@ -167,7 +179,27 @@ function Dynamic({ product: propProduct }) {
   // responsive thumbnail size
   const THUMB_CLASS = 'w-15 h-15 sm:w-14 sm:h-14 md:w-16 md:h-16'
   // prepare thumbnails dynamically based on available images
-  const _baseImages = product?.images || product?.gallery || [product?.image]
+  const _baseImages = []
+  
+  // Add main image
+  if (product?.image) {
+    _baseImages.push(product.image)
+  }
+  
+  // Add modal images if they exist
+  if (product?.modalImages && Array.isArray(product.modalImages)) {
+    product.modalImages.forEach(img => {
+      if (img) { // Only add non-null images
+        _baseImages.push(img)
+      }
+    })
+  }
+  
+  // If no modal images, add main image again for consistency
+  if (_baseImages.length === 1 && product?.image) {
+    _baseImages.push(product.image)
+  }
+  
   const thumbImages = _baseImages.length > 0 ? _baseImages : [product?.image]
 
   // insert <link rel="preload" as="image"> tags ASAP so thumbnails and main image are prioritized
@@ -388,7 +420,7 @@ function Dynamic({ product: propProduct }) {
 
                 {/* Product Title, Rating and Price */}
                 <div className="mt-6 px-3">
-                  <h2 className="text-base md:text-2xl font-bold tracking-widest uppercase">{product.title}</h2>
+                  <h2 className="text-base md:text-2xl font-bold tracking-widest uppercase">{product.name || product.title}</h2>
                   
                   <div className="flex items-center gap-3 mt-3 text-sm text-gray-400">
                     <div className="flex items-center gap-1 text-amber-400">
@@ -396,7 +428,7 @@ function Dynamic({ product: propProduct }) {
                         <svg key={i} className={`w-4 h-4 ${i < Math.round(product.rating) ? 'fill-current' : 'text-gray-200'}`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .587l3.668 7.431L24 9.75l-6 5.847 1.417 8.27L12 19.77l-7.417 4.097L6 15.597 0 9.75l8.332-1.732z"/></svg>
                       ))}
                     </div>
-                    <span className="text-gray-400">({product.rating} reviews)</span>
+                    <span className="text-gray-400">({product.rating}) rating</span>
                   </div>
                   
                   <div className="md:text-2xl text-xl font-[verdana] font-extrabold text-[#111] mt-3">N{product.price.toLocaleString()}</div>
@@ -451,29 +483,25 @@ function Dynamic({ product: propProduct }) {
               </p>
 
               <div className="mt-8 flex items-center gap-4">
-                {(() => {
-                  const isAdded = justAdded
-                  return (
-                    <button
-                      onClick={!product.soldOut && !isAdded ? handleAddToCart : undefined}
-                      disabled={product.soldOut || isAdded}
-                      className={`${product.soldOut ? 'flex items-center gap-1 bg-gray-300 text-gray-600 px-4 py-3 rounded-md font-semibold shadow-sm cursor-not-allowed' : isAdded ? 'flex items-center gap-2 bg-green-500 text-white px-4 py-3 rounded-md font-semibold shadow-sm cursor-not-allowed' : 'flex items-center gap-1 bg-black text-xs text-white px-4 py-3 rounded-md font-semibold shadow-sm cursor-pointer hover:opacity-95 hover:scale-[1.01] transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-amber-400'}`}>
-                      {product.soldOut ? (
-                        'SOLD OUT'
-                      ) : isAdded ? (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          <span>Added</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="20" cy="20" r="1"/></svg>
-                          ADD TO CART
-                        </>
-                      )}
-                    </button>
-                  )
-                })()}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.soldOut || justAdded}
+                  className={`${product.soldOut ? 'flex items-center gap-1 bg-gray-300 text-gray-600 px-4 py-3 rounded-md font-semibold shadow-sm cursor-not-allowed' : justAdded ? 'flex items-center gap-2 bg-green-500 text-white px-4 py-3 rounded-md font-semibold shadow-sm cursor-not-allowed' : 'flex items-center gap-1 bg-black text-xs text-white px-4 py-3 rounded-md font-semibold shadow-sm cursor-pointer hover:opacity-95 hover:scale-[1.01] transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-amber-400'}`}
+                >
+                  {product.soldOut ? (
+                    'SOLD OUT'
+                  ) : justAdded ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <span>Added</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="20" cy="20" r="1"/></svg>
+                      ADD TO CART
+                    </>
+                  )}
+                </button>
 
                 {!product.soldOut && (
                   <button onClick={handleBuyNow} className="px-4 py-3 rounded-md border border-black/20 text-xs font-semibold cursor-pointer hover:bg-black hover:text-white transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-200">BUY NOW</button>

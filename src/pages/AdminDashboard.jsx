@@ -22,9 +22,10 @@ import {
   Bell,
   Search,
   Plus,
+  PlusCircle,
   Eye,
   Edit,
-  Trash2,
+  Trash,
   Check,
   CheckCircle,
   X as CloseIcon,
@@ -38,6 +39,8 @@ import {
   ClockArrowDown,
   ShoppingBasket,
   Store,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Info,
   Calendar,
@@ -444,15 +447,45 @@ export default Shop;`;
   };
 
   const handleProductChange = (field, value) => {
+    setTempProduct(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageUpload = (e, type, index) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (type === 'main') {
+          setTempProduct(prev => ({
+            ...prev,
+            image: event.target.result
+          }));
+        } else if (type === 'modal') {
+          setTempProduct(prev => {
+            const modalImages = [...(prev.modalImages || [])];
+            modalImages[index] = event.target.result;
+            return {
+              ...prev,
+              modalImages
+            };
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeModalImage = (index) => {
     setTempProduct(prev => {
-      const updated = { ...prev, [field]: value };
-      
-      // Auto-generate description when product name changes
-      if (field === 'name') {
-        updated.description = generateProductDescription(value);
-      }
-      
-      return updated;
+      const modalImages = [...(prev.modalImages || [])];
+      modalImages[index] = null;
+      return {
+        ...prev,
+        modalImages
+      };
     });
   };
 
@@ -690,51 +723,80 @@ export default Shop;`;
       localStorage.setItem('wigProducts', JSON.stringify(updatedProducts));
     };
 
+    // Pagination for products
+    const [currentPage, setCurrentPage] = useState(1);
+    const productsPerPage = 8;
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+    const totalPages = Math.ceil(products.length / productsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+    const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+
+    const getPageNumbers = () => {
+      const pageNumbers = [];
+      const maxVisiblePages = 4;
+      
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      return pageNumbers;
+    };
+
     return (
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-        
-          <div className="flex space-x-2">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700">
-              <Plus size={20} />
-              <span>Add Product</span>
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+            <button className="bg-blue-400 hover:bg-blue-500 text-white px-4 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm">
+              <PlusCircle size={18} />
+              <span className="text-sm">Add Product</span>
             </button>
             <button 
               onClick={regenerateDescriptions} 
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-orange-700"
+              className="bg-red-400 hover:bg-red-500 text-white px-4 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm"
             >
-              <RefreshCw size={20} />
-              <span>Remove Product</span>
+              <Trash size={18} />
+              <span className="text-sm">Remove Product</span>
             </button>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Edit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {products.map((product) => (
+              {currentProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-4">
                     <div className="flex items-center space-x-2 min-w-0">
                       <img 
                         src={product.image} 
                         alt={product.name}
                         className="w-8 h-8 rounded object-cover flex-shrink-0"
                       />
-                      <span className="font-medium text-xs truncate" title={product.name}>{product.name}</span>
+                      <span className="font-medium text-xs sm:text-sm truncate" title={product.name}>{product.name}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-sm">₦{product.price.toLocaleString()}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-4 text-xs sm:text-sm">₦{product.price.toLocaleString()}</td>
+                  <td className="px-2 py-4">
                     <button
                       onClick={() => startEditingProduct(product)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-blue-600 hover:text-blue-800 font-medium text-xs sm:text-sm"
                     >
                       Edit
                     </button>
@@ -744,6 +806,56 @@ export default Shop;`;
             </tbody>
           </table>
         </div>
+
+        {/* Products Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-gray-50 px-3 py-3 sm:px-4 sm:py-3 border-t border-gray-200">
+            <div className="flex items-center justify-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`p-2 text-sm font-medium rounded-xl transition-colors border ${
+                  currentPage === 1
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100 border-gray-300'
+                    : 'text-gray-600 hover:bg-blue-100 hover:text-blue-500 border-gray-300 bg-white'
+                }`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    onClick={() => paginate(pageNumber)}
+                    className={`w-10 h-10 text-sm font-medium rounded-xl transition-colors flex items-center justify-center ${
+                      currentPage === pageNumber
+                        ? 'bg-blue-400 text-white border-blue-400'
+                        : 'bg-white hover:bg-blue-100 text-gray-700 border border-gray-300'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`p-2 text-sm font-medium rounded-xl transition-colors border ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100 border-gray-300'
+                    : 'text-gray-600 hover:bg-blue-100 hover:text-blue-500 border-gray-300 bg-white'
+                }`}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -873,7 +985,7 @@ export default Shop;`;
 
           {/* Pagination */}
           <div className="bg-gray-50 px-3 py-3 sm:px-4 sm:py-3 border-t border-gray-200">
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-2">
               {/* Previous Button */}
               <button
                 onClick={goToPreviousPage}
@@ -888,19 +1000,21 @@ export default Shop;`;
               </button>
 
               {/* Page Numbers */}
-              {getPageNumbers().map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  onClick={() => paginate(pageNumber)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    currentPage === pageNumber
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ))}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    onClick={() => paginate(pageNumber)}
+                    className={`w-10 h-10 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
+                      currentPage === pageNumber
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+              </div>
 
               {/* Next Button */}
               <button
@@ -1329,6 +1443,83 @@ export default Shop;`;
 
                 {/* Edit Form */}
                 <div className="space-y-4">
+                  {/* Main Image */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Main Image</label>
+                    <div className="flex items-center space-x-4">
+                      <img 
+                        src={tempProduct?.image || '/placeholder.jpg'} 
+                        alt="Main product"
+                        className="w-20 h-20 rounded-lg object-cover border border-gray-200"
+                      />
+                      <div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'main')}
+                          className="hidden"
+                          id="main-image-upload"
+                        />
+                        <label
+                          htmlFor="main-image-upload"
+                          className="cursor-pointer bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-sm hover:bg-blue-200 transition-colors"
+                        >
+                          Change Main Image
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Images */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Product Gallery Images (Max 5)</label>
+                    <div className="grid grid-cols-5 gap-3">
+                      {[...Array(5)].map((_, index) => {
+                        const modalImage = tempProduct?.modalImages?.[index];
+                        return (
+                          <div key={index} className="relative">
+                            {modalImage ? (
+                              <div className="relative group">
+                                <img 
+                                  src={modalImage} 
+                                  alt={`Gallery ${index + 1}`}
+                                  className="w-full h-20 rounded-lg object-cover border border-gray-200"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeModalImage(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="w-full h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-gray-400 transition-colors">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleImageUpload(e, 'modal', index)}
+                                  className="hidden"
+                                  id={`modal-image-${index}`}
+                                />
+                                <label
+                                  htmlFor={`modal-image-${index}`}
+                                  className="cursor-pointer text-gray-400 hover:text-gray-600 text-xs text-center"
+                                >
+                                  <div>+</div>
+                                  <div>Image</div>
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Click empty slots to upload product gallery images. These will appear in the product detail view.
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
                     <input
@@ -1367,6 +1558,26 @@ export default Shop;`;
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                    <select
+                      value={tempProduct?.rating || 4.0}
+                      onChange={(e) => handleProductChange('rating', parseFloat(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value={4.0}>4.0 - Good</option>
+                      <option value={4.1}>4.1 - Good</option>
+                      <option value={4.2}>4.2 - Good</option>
+                      <option value={4.3}>4.3 - Good</option>
+                      <option value={4.4}>4.4 - Good</option>
+                      <option value={4.5}>4.5 - Good</option>
+                      <option value={4.6}>4.6 - Good</option>
+                      <option value={4.7}>4.7 - Good</option>
+                      <option value={4.8}>4.8 - Good</option>
+                      <option value={4.9}>4.9 - Good</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                     <textarea
                       value={tempProduct?.description || ''}
@@ -1389,7 +1600,7 @@ export default Shop;`;
                   </button>
                   <button 
                     onClick={saveProductChanges}
-                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg border border-blue-600 hover:bg-blue-700 transition-colors font-medium"
+                    className="px-6 py-2.5 bg-green-500 text-white rounded-lg border border-green-500 hover:bg-green-600 transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:scale-105"
                   >
                     Save Changes
                   </button>
