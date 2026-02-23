@@ -1,7 +1,6 @@
 import React from 'react'
 import logoImage from '../assets/logo2.png'
 import { MapPin, Mail, Phone } from 'lucide-react'
-import LazyImage from '../components/LazyImage'
 
 const Footer = () => {
   const scrollToBenefits = () => {
@@ -57,7 +56,7 @@ const Footer = () => {
         {/* Company Logo and Name */}
         <div className="flex items-center justify-center mb-4">
           <div className="flex items-center space-x-3">
-            <LazyImage
+            <img
               src={logoImage}
               alt="Vista Express Logistics Logo"
               className="w-39 h-12 "

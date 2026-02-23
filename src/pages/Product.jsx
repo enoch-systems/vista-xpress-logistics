@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react'
-import LazyImage from '../components/LazyImage'
 
 const ProductSection = () => {
   const sectionRef = useRef(null)
@@ -30,7 +29,7 @@ const ProductSection = () => {
   const VideoCard = ({ thumbnail, title, description }) => (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
       <div className="relative">
-        <LazyImage 
+        <img 
           src={thumbnail} 
           alt={title} 
           className="w-full h-48 object-cover"

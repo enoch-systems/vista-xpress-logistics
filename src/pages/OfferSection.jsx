@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react'
-import LazyImage from '../components/LazyImage'
 
 const OfferSection = () => {
   const sectionRef = useRef(null)
@@ -55,10 +54,10 @@ const OfferSection = () => {
           className="bg-white rounded-lg shadow-lg overflow-hidden md:flex opacity-0"
         >
           <div className="md:flex-shrink-0">
-            <LazyImage
+            <img
+              className="h-full w-full object-cover md:w-56"
               src="/src/assets/vista.jpeg"
               alt="Offer Image"
-              className="h-full w-full object-cover md:w-56"
             />
           </div>
           <div className="p-8 flex flex-col justify-center">

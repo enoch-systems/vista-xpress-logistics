@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react'
-import LazyImage from '../components/LazyImage'
 
 const AboutSection = () => {
   const sectionRef = useRef(null)
@@ -64,7 +63,7 @@ const AboutSection = () => {
             </button>
             
             <div className="w-64 h-64 md:w-80 md:h-80 bg-gray-200 rounded-lg overflow-hidden">
-              <LazyImage 
+              <img 
                 src="/src/assets/vista.jpeg" 
                 alt="Ezinne Vivian Chinwendu" 
                 className="w-full h-full object-cover"

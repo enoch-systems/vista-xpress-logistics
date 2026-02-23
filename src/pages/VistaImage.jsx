@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import vistaImage from '../assets/vista.jpeg'
-import LazyImage from '../components/LazyImage'
 
 const VistaImage = () => {
   const images = [vistaImage, vistaImage, vistaImage, vistaImage, vistaImage]
@@ -81,11 +80,11 @@ const VistaImage = () => {
         className="opacity-0"
       >
         <div className="relative overflow-hidden rounded-lg shadow-lg">
-          <LazyImage
-            src={images[currentIndex]}
-            alt={`Vista Express Logistics - Image ${currentIndex + 1}`}
-            className="w-full h-auto zoom-effect"
-          />
+          <img
+          src={images[currentIndex]}
+          alt={`Vista Express Logistics - Image ${currentIndex + 1}`}
+          className="w-full h-auto zoom-effect"
+        />
           
           {/* Navigation buttons hidden */}
         </div>
