@@ -1,7 +1,20 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const AboutSection = () => {
   const sectionRef = useRef(null)
+  const images = ['/assets/ceo1.jpg', '/assets/ceo2.jpg']
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index)
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
+    }, 4000) // Auto-play every 4 seconds
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -28,45 +41,52 @@ const AboutSection = () => {
   }, [])
 
   return (
-    <section className="bg-blue-50 py-12 px-4">
-      <div className="container mx-auto text-center">
-        <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase mb-8">MEET THE LEAD FACILITATOR</h2>
+    <section className="bg-blue-50 py-12 px-4 md:py-16 lg:py-20">
+      <div className="container mx-auto text-center px-4 md:px-6 lg:px-8">
+        <h2 className="block mt-1 text-lg md:text-xl lg:text-2xl leading-tight font-semibold text-black uppercase mb-8 md:mb-10 lg:mb-12">MEET THE LEAD FACILITATOR</h2>
         
         <div 
           ref={sectionRef}
           className="max-w-4xl mx-auto opacity-0"
         >
-          {/* Image Container with Navigation */}
-          <div className="relative flex items-center justify-center mb-6">
-            <button className="absolute left-0 text-gray-400 hover:text-gray-600 text-2xl">
-              ‹
-            </button>
-            
-            <div className="w-64 h-64 md:w-80 md:h-80 bg-gray-200 rounded-lg overflow-hidden">
-              <img 
-                src="/assets/vista.jpeg" 
-                alt="Ezinne Vivian Chinwendu" 
-                className="w-full h-full object-cover"
+          {/* Image Carousel */}
+          <div className="relative flex items-center justify-center mb-6 md:mb-8 lg:mb-10">
+            <div className="relative overflow-hidden rounded-lg  w-76 h-76 md:w-72 md:h-72 lg:w-96 lg:h-96">
+              <img
+                src={images[currentIndex]}
+                alt={`Ezinne Vivian Chinwendu - Image ${currentIndex + 1}`}
+                className="w-full h-full object-contain zoom-effect transition-transform duration-1000 ease-in-out hover:scale-110"
               />
             </div>
-            
-            <button className="absolute right-0 text-gray-400 hover:text-gray-600 text-2xl">
-              ›
-            </button>
+          </div>
+          
+          {/* Carousel Indicators */}
+          <div className="flex justify-center mb-6 md:mb-8 lg:mb-10 space-x-2">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`rounded-full transition-all duration-300 ${
+                  index === currentIndex 
+                    ? 'w-4 h-4 bg-orange-500 scale-110' 
+                    : 'w-2 h-2 bg-gray-400 hover:bg-gray-500'
+                }`}
+              />
+            ))}
           </div>
           
           {/* Description */}
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <p className="mt-2 text-gray-500">
+          <div className="text-center max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto mb-6 md:mb-8 lg:mb-10">
+            <p className="mt-2 text-gray-500 text-sm md:text-base lg:text-lg leading-relaxed md:leading-relaxed lg:leading-relaxed">
               Ezinne Vivian Chinwendu is the founder of Vista Express Logistics Academy. With years of experience in importation and logistics, she has helped countless individuals start and grow their mini-importation businesses. Her practical approach and industry insights make her the perfect guide for anyone looking to enter the profitable world of international trade.
             </p>
           </div>
           
           {/* Learn More Button */}
           <div className="text-center">
-            <button className="border-2 border-orange-500 text-orange-500 px-6 py-2 rounded-full font-medium hover:bg-orange-500 hover:text-white transition duration-300">
-              Learn more
-            </button>
+            <a href="#" className="text-orange-500 hover:text-orange-700 text-sm md:text-base lg:text-lg font-semibold">
+              Know more {'>'}
+            </a>
           </div>
         </div>
       </div>

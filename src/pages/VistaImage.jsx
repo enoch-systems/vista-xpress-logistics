@@ -28,7 +28,7 @@ const VistaImage = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.target.classList.contains('opacity-0')) {
             entry.target.classList.remove('opacity-0')
-            entry.target.classList.add('animate-slide-in-right')
+            entry.target.classList.add('animate-slide-in-left')
           }
         })
       },

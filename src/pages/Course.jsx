@@ -31,29 +31,29 @@ const CourseSection = () => {
   }, [])
 
   return (
-    <section id="courses-section" className="py-12 bg-gray-100">
-      <div className="container mx-auto px-4">
+    <section id="courses-section" className="py-12 md:py-16 lg:py-20 bg-gray-100">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div 
           ref={sectionRef}
           className="bg-gray-100 rounded-lg shadow-lg overflow-hidden md:flex opacity-0"
         >
           <div className="md:flex-shrink-0">
             <img
-              className="h-full w-full object-cover md:w-56"
+              className="h-full w-full object-cover md:w-56 lg:w-64"
               src="/assets/vista.jpeg"
               alt="Course Image"
             />
           </div>
-          <div className="p-8 flex flex-col justify-center">
-            <div className="uppercase tracking-wide text-sm text-black font-semibold">Education</div>
-            <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase">
+          <div className="p-6 md:p-8 lg:p-10 flex flex-col justify-center">
+            <div className="uppercase tracking-wide text-sm md:text-base lg:text-lg text-black font-semibold">Education</div>
+            <h2 className="block mt-1 text-lg md:text-xl lg:text-2xl leading-tight font-bold text-black uppercase">
               Mini-Importation Course
             </h2>
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-gray-500 text-sm md:text-base lg:text-lg leading-relaxed">
               Learn to import and profit with our comprehensive course covering everything from finding suppliers to navigating customs regulations.
             </p>
-            <div className="mt-4">
-              <a href="#" className="text-gray-500 hover:text-indigo-900 text-sm font-semibold">
+            <div className="mt-4 md:mt-6 lg:mt-8">
+              <a href="#" className="text-orange-500 hover:text-orange-700 text-sm md:text-base lg:text-lg font-semibold">
                 Know more {'>'}
               </a>
             </div>
