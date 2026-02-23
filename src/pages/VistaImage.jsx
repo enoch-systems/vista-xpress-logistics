@@ -26,12 +26,13 @@ const VistaImage = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && entry.target.classList.contains('opacity-0')) {
+            entry.target.classList.remove('opacity-0')
             entry.target.classList.add('animate-slide-in-right')
           }
         })
       },
-      { threshold: 0.1 }
+      { threshold: 0.2 }
     )
 
     if (sectionRef.current) {
@@ -47,33 +48,6 @@ const VistaImage = () => {
 
   return (
     <section className="px-4 py-4 relative">
-      <style>
-        {`
-          @keyframes zoom {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-          }
-          .zoom-effect {
-            animation: zoom 4s ease-in-out infinite;
-          }
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(100px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          .animate-slide-in-right {
-            animation: slideInRight 0.8s ease-out forwards;
-          }
-          .opacity-0 {
-            opacity: 0;
-          }
-        `}
-      </style>
       <div 
         ref={sectionRef}
         className="opacity-0"

@@ -29,26 +29,6 @@ const OfferSection = () => {
 
   return (
     <section id="offers-section" className="py-12 bg-gray-100">
-      <style>
-        {`
-          @keyframes slideInLeft {
-            from {
-              opacity: 0;
-              transform: translateX(-100px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          .animate-slide-in-left {
-            animation: slideInLeft 0.8s ease-out forwards;
-          }
-          .opacity-0 {
-            opacity: 0;
-          }
-        `}
-      </style>
       <div className="container mx-auto px-4">
         <div 
           ref={sectionRef}

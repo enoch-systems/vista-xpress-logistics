@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { HashRouter as Router } from "react-router-dom";
 import "./index.css";
+import "./animations.css";
 import App from "./App.jsx";
 
 // Scroll to top on page refresh

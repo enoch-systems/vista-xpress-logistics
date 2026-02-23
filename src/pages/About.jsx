@@ -29,34 +29,13 @@ const AboutSection = () => {
 
   return (
     <section className="bg-blue-50 py-12 px-4">
-      <style>
-        {`
-          @keyframes slideInBottom {
-            from {
-              opacity: 0;
-              transform: translateY(100px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-slide-in-bottom {
-            animation: slideInBottom 0.8s ease-out forwards;
-          }
-          .opacity-0 {
-            opacity: 0;
-          }
-        `}
-      </style>
-      <div 
-        ref={sectionRef}
-        className="container mx-auto opacity-0"
-      >
-        <p className="text-center text-gray-600 text-sm mb-2">About</p>
-        <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase text-center">MEET THE LEAD FACILITATOR</h2>
+      <div className="container mx-auto text-center">
+        <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase mb-8">MEET THE LEAD FACILITATOR</h2>
         
-        <div className="max-w-4xl mx-auto">
+        <div 
+          ref={sectionRef}
+          className="max-w-4xl mx-auto opacity-0"
+        >
           {/* Image Container with Navigation */}
           <div className="relative flex items-center justify-center mb-6">
             <button className="absolute left-0 text-gray-400 hover:text-gray-600 text-2xl">

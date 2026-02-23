@@ -51,39 +51,19 @@ const ProductSection = () => {
   );
 
   return (
-    <section className="bg-gray-100 py-12 px-4">
-      <style>
-        {`
-          @keyframes slideInBottom {
-            from {
-              opacity: 0;
-              transform: translateY(100px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-slide-in-bottom {
-            animation: slideInBottom 0.8s ease-out forwards;
-          }
-          .opacity-0 {
-            opacity: 0;
-          }
-        `}
-      </style>
-      <div 
-        ref={sectionRef}
-        className="container mx-auto opacity-0"
-      >
-        <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase text-center">PRODUCT UNBOXING</h2>
+    <section className="bg-gray-50 py-12 px-4">
+      <div className="container mx-auto">
+        <h2 className="block mt-1 text-lg leading-tight font-semibold text-amber-600 uppercase text-center mb-8">PRODUCT UNBOXING</h2>
         
         <p className="mt-2 text-gray-500 text-center">
           Watch our students unbox their imported products and see the quality firsthand. 
           These videos showcase real results from our mini-importation course graduates.
         </p>
         
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div 
+          ref={sectionRef}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-0"
+        >
           <VideoCard 
             thumbnail="/src/assets/logo.jpeg"
             title="Student Success: First Import"
