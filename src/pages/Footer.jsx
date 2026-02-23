@@ -1,5 +1,4 @@
 import React from 'react'
-import logoImage from '../assets/logo2.png'
 import { MapPin, Mail, Phone } from 'lucide-react'
 
 const Footer = () => {
@@ -57,7 +56,7 @@ const Footer = () => {
         <div className="flex items-center justify-center mb-4">
           <div className="flex items-center space-x-3">
             <img
-              src={logoImage}
+              src="/assets/logo2.png"
               alt="Vista Express Logistics Logo"
               className="w-39 h-12 "
             />

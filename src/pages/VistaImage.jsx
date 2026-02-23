@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import vistaImage from '../assets/vista.jpeg'
 
 const VistaImage = () => {
-  const images = [vistaImage, vistaImage, vistaImage, vistaImage, vistaImage]
+  const images = ['/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg']
   const [currentIndex, setCurrentIndex] = useState(0)
   const sectionRef = useRef(null)
 

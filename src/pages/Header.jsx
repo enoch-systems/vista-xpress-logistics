@@ -1,6 +1,5 @@
 import React from 'react'
 import { FaBars } from 'react-icons/fa'
-import logoImage from '../assets/logo.jpeg'
 
 const Header = () => {
   return (
@@ -8,7 +7,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center ">
         <div className="flex items-center space-x-3 ">
           <img
-            src={logoImage}
+            src="/assets/logo.jpeg"
             alt="Vista Express Logistics Logo"
             className="w-39 h-12 rounded-full"
           />

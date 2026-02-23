@@ -56,7 +56,7 @@ const CourseSection = () => {
           <div className="md:flex-shrink-0">
             <img
               className="h-full w-full object-cover md:w-56"
-              src="/src/assets/vista.jpeg"
+              src="/assets/vista.jpeg"
               alt="Course Image"
             />
           </div>
