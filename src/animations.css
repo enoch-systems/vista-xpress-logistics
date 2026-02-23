@@ -52,28 +52,35 @@
   }
 }
 
+/* Animation classes with higher specificity */
 .animate-slide-in-left {
   animation: slideInLeft 0.8s ease-out forwards !important;
+  opacity: 1 !important;
 }
 
 .animate-slide-in-right {
   animation: slideInRight 0.8s ease-out forwards !important;
+  opacity: 1 !important;
 }
 
 .animate-slide-in-bottom {
   animation: slideInBottom 0.8s ease-out forwards !important;
+  opacity: 1 !important;
 }
 
 .animate-slide-in-top {
   animation: slideInTop 0.8s ease-out forwards !important;
+  opacity: 1 !important;
 }
 
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out forwards !important;
+  opacity: 1 !important;
 }
 
 .opacity-0 {
   opacity: 0 !important;
+  transform: none !important;
 }
 
 /* Ensure animations work in production */
@@ -85,4 +92,18 @@
   will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fallback for browsers that don't support animations */
+@supports not (animation: slideInLeft 0.8s ease-out) {
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-slide-in-bottom,
+  .animate-slide-in-top,
+  .animate-fade-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

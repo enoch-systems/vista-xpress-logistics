@@ -8,12 +8,15 @@ const BenefitsSection = () => {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.target.classList.contains('opacity-0')) {
-            entry.target.classList.remove('opacity-0')
-            entry.target.classList.add('animate-slide-in-left')
+            // Add a small delay to ensure DOM is ready
+            setTimeout(() => {
+              entry.target.classList.remove('opacity-0')
+              entry.target.classList.add('animate-slide-in-left')
+            }, 100)
           }
         })
       },
-      { threshold: 0.2 }
+      { threshold: 0.1, rootMargin: '50px' }
     )
 
     if (sectionRef.current) {
