@@ -7,12 +7,13 @@ const CourseSection = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && entry.target.classList.contains('opacity-0')) {
+            entry.target.classList.remove('opacity-0')
             entry.target.classList.add('animate-slide-in-left')
           }
         })
       },
-      { threshold: 0.1 }
+      { threshold: 0.2 }
     )
 
     if (sectionRef.current) {
