@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import vistaImage from '../assets/vista.jpeg'
 
 const VistaImage = () => {
   const images = ['/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg', '/assets/vista.jpeg']
