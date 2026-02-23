@@ -116,7 +116,7 @@ const ProductSection = () => {
 
   return (
     <>
-    <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4">
+    <section className="bg-gray-100 py-12 md:py-16 lg:py-20 px-4">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <h2 className="block mt-1 text-lg md:text-xl lg:text-2xl leading-tight font-semibold text-black uppercase text-center mb-8 md:mb-10 lg:mb-12">PRODUCT UNBOXING</h2>
         

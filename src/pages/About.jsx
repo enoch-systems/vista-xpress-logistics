@@ -41,7 +41,7 @@ const AboutSection = () => {
   }, [])
 
   return (
-    <section className="bg-blue-50 py-12 px-4 md:py-16 lg:py-20">
+    <section className="bg-gray-100 py-12 px-4 md:py-16 lg:py-20">
       <div className="container mx-auto text-center px-4 md:px-6 lg:px-8">
         <h2 className="block mt-1 text-lg md:text-xl lg:text-2xl leading-tight font-semibold text-black uppercase mb-8 md:mb-10 lg:mb-12">MEET THE LEAD FACILITATOR</h2>
         
